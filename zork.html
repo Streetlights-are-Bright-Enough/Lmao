@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Adventure: Zork Max Ultimate</title>
+<style>
+body { margin:0; font-family: monospace; background:#000; color:#0f0; opacity:0; transition: opacity 1s; }
+body.visible { opacity:1; }
+#game-panel { position: absolute; top:50%; left:50%; transform: translate(-50%,-50%);
+    width: 800px; height: 600px; background: rgba(0,0,0,0.95);
+    border: 2px solid #0f0; border-radius: 10px; padding: 10px; overflow: hidden;
+    display: flex; flex-direction: column;
+}
+#game { white-space: pre-wrap; height: 60%; overflow-y: auto; flex:1; }
+#log { height: 15%; border-top: 1px solid #0f0; margin-top:5px; overflow-y:auto; padding-top:5px; }
+#cmd { width: calc(100% - 20px); margin-top:5px; padding:5px; border-radius:5px; border:none; background:#111; color:#0f0; }
+#cmd:focus { outline:none; }
+#overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:black; color:#0f0; display:none; align-items:center; justify-content:center; flex-direction:column; text-align:center; font-size:24px; }
+#minimap { border:1px solid #0f0; height:120px; margin-top:5px; background:#000; display:flex; flex-wrap: wrap; width:200px; }
+.tile { width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#0f0; }
+.tile.player { background:#0f0; color:#000; }
+.autocomplete { position:absolute; background:#111; border:1px solid #0f0; color:#0f0; padding:2px 5px; max-height:100px; overflow-y:auto; font-size:14px; display:none; }
+</style>
+</head>
+<body>
+<div id="game-panel">
+    <div id="game">Loading game...</div>
+    <div id="minimap"></div>
+    <div id="log">Quest log: None</div>
+    <input id="cmd" placeholder="Enter command..." autofocus autocomplete="off">
+    <div id="autocomplete" class="autocomplete"></div>
+</div>
+<div id="overlay"></div>
+<audio id="sfx" src=""></audio>
+<script>
+// ---------- Player & World ----------
+let player = { name:null, location:'start', hp:20, maxHp:20, inventory:[], time:0, quests:{}, gold:0 };
+const locations = {
+    'start': { desc:'Open field west of a white house.', exits:{north:'forest', east:'house'}, items:['coin'], npcs:[] },
+    'forest': { desc:'A dark forest. Shadows move among the trees.', exits:{south:'start', east:'cave'}, items:[], npcs:[] },
+    'cave': { desc:'A damp cave. Mossy walls and hidden corners.', exits:{west:'forest', north:'treasure'}, items:['torch'], npcs:[] },
+    'house': { desc:'Small cozy house.', exits:{west:'start', upstairs:'attic'}, items:['key'], npcs:['villager'] },
+    'attic': { desc:'Dusty attic full of cobwebs.', exits:{downstairs:'house'}, items:['map'], npcs:[] },
+    'treasure': { desc:'Hidden treasure chamber with a locked chest.', exits:{south:'cave'}, items:[], npcs:[] }
+};
+const npcs = { 'villager': { hp:10, hostile:false, dialog:'Hello traveler! Be careful of the forest.' }, 'wolf': { hp:8, hostile:true } };
+const quests = {
+    'findTorch': { desc:'Find the torch in the cave.', complete:false, steps:['Find torch'], reward:'100 gold' },
+    'treasureHunt': { desc:'Unlock the chest in the treasure room.', complete:false, steps:['Obtain key','Reach treasure'], reward:'Ultimate Triforce' }
+};
+const moveAliases = { n:'north', s:'south', e:'east', w:'west', north:'north', south:'south', east:'east', west:'west' };
+const commandsList=['n','s','e','w','north','south','east','west','go north','go south','go east','go west','look','inventory','take','drop','talk','attack','attack nasty knife','open chest','quit','exit','help','use','map'];
+
+// DOM
+const gameDiv = document.getElementById('game');
+const cmdInput = document.getElementById('cmd');
+const logDiv = document.getElementById('log');
+const overlay = document.getElementById('overlay');
+const sfx = document.getElementById('sfx');
+const minimapDiv = document.getElementById('minimap');
+const autocompleteDiv = document.getElementById('autocomplete');
+
+// ---------- SAVE/LOAD ----------
+function saveGame(){ localStorage.setItem('zorkState', JSON.stringify({player, locations, npcs, quests})); }
+function loadGame(){ 
+    const saved = localStorage.getItem('zorkState');
+    if(saved){ 
+        const state = JSON.parse(saved);
+        Object.assign(player, state.player);
+        Object.keys(locations).forEach(k=>Object.assign(locations[k], state.locations[k]));
+        Object.keys(npcs).forEach(k=>Object.assign(npcs[k], state.npcs[k]));
+        Object.keys(quests).forEach(k=>Object.assign(quests[k], state.quests[k]));
+        return true;
+    } return false;
+}
+
+// ---------- Dynamic Events ----------
+function randomEncounter(){
+    const loc = locations[player.location];
+    if(Math.random()<0.2 && player.location==='forest' && !loc.npcs.includes('wolf')){
+        loc.npcs.push('wolf'); gameLog('A wild wolf appears!');
+    }
+    if(Math.random()<0.1 && player.location==='cave' && !loc.items.includes('mysterious gem')){
+        loc.items.push('mysterious gem'); gameLog('A mysterious gem glints in the cave.');
+    }
+}
+function advanceTime(){ player.time++; if(player.time%5===0){ randomEncounter(); render(); saveGame(); } }
+
+// ---------- Render ----------
+function render(){
+    const loc = locations[player.location];
+    const npcHere = loc.npcs.join(', ')||'None';
+    const itemsHere = loc.items.join(', ')||'None';
+    gameDiv.textContent = `Player: ${player.name}\nLocation: ${player.location}\nHP: ${player.hp}/${player.maxHp}\nGold: ${player.gold}\nInventory: ${player.inventory.join(', ')||'Empty'}\n\n${loc.desc}\nExits: ${Object.keys(loc.exits).join(', ')}\nItems here: ${itemsHere}\nNPCs here: ${npcHere}`;
+    renderQuestLog();
+    renderMiniMap();
+}
+function renderQuestLog(){
+    const activeQuests = Object.values(quests).filter(q=>!q.complete).map(q=>`${q.desc}: ${q.steps.join(', ')}`).join('\n')||'None';
+    logDiv.textContent = 'Quest log:\n' + activeQuests;
+}
+function gameLog(msg){ gameDiv.textContent += '\n' + msg; gameDiv.scrollTop = gameDiv.scrollHeight; }
+
+// ---------- Mini-map ----------
+function renderMiniMap(){
+    minimapDiv.innerHTML='';
+    const locKeys = Object.keys(locations);
+    locKeys.forEach(key=>{
+        const div = document.createElement('div'); div.classList.add('tile'); div.textContent=key[0].toUpperCase();
+        if(key===player.location) div.classList.add('player');
+        minimapDiv.appendChild(div);
+    });
+}
+
+// ---------- Endings ----------
+function showOverlay(msg){ overlay.style.display='flex'; overlay.textContent=msg; cmdInput.disabled=true; }
+function checkEndings(){
+    if(player.inventory.includes('ultimate triforce')){ showOverlay("*** CONGRATULATIONS! You have claimed the Ultimate Triforce! ***"); return; }
+    if(player.hp <=0){ showOverlay("*** You have perished. Game over. ***"); return; }
+}
+
+// ---------- Init ----------
+window.addEventListener('load', ()=>{
+    document.body.classList.add('visible');
+    if(!player.name){
+        let name = prompt("Enter your player name","");
+        if(name) player.name = name.trim(); else player.name="Adventurer";
+        const specialNames={'Balasar':'https://www.youtube.com/watch?v=gtbbIB776ks','Blackwolf':'https://www.youtube.com/watch?v=jhK2ev_O-pc','Kataran':'https://www.youtube.com/watch?v=ggyC0FOzqHM'};
+        if(specialNames[player.name]) window.open(specialNames[player.name],'_blank');
+    }
+    cmdInput.focus();
+    if(!loadGame()) render(); else render();
+    setInterval(advanceTime,5000);
+});
+
+// ---------- Autocomplete ----------
+cmdInput.addEventListener('input',()=>{
+    const val = cmdInput.value.toLowerCase();
+    autocompleteDiv.innerHTML='';
+    if(!val){ autocompleteDiv.style.display='none'; return; }
+    const matches = commandsList.filter(c=>c.startsWith(val));
+    if(matches.length>0){
+        matches.forEach(m=>{
+            const div = document.createElement('div'); div.textContent=m; div.addEventListener('click',()=>{ cmdInput.value=m; autocompleteDiv.style.display='none'; cmdInput.focus(); });
+            autocompleteDiv.appendChild(div);
+        });
+        autocompleteDiv.style.display='block';
+        const rect = cmdInput.getBoundingClientRect();
+        autocompleteDiv.style.top = (rect.bottom+window.scrollY)+'px';
+        autocompleteDiv.style.left = (rect.left+window.scrollX)+'px';
+        autocompleteDiv.style.width = rect.width+'px';
+    } else autocompleteDiv.style.display='none';
+});
+
+// ---------- Command Handler ----------
+function handleCommand(cmd){
+    cmd=cmd.toLowerCase().trim(); const loc = locations[player.location];
+    if(cmd==='attack nasty knife'){ window.location.href='chuck.html'; return; }
+    if(cmd==='quit'||cmd==='exit'){ showOverlay("*** You have left the adventure. ***"); return; }
+    if(cmd.startsWith('go ')) cmd = cmd.slice(3).trim();
+    const dir = moveAliases[cmd];
+    if(dir){
+        if(loc.exits[dir]){
+            player.location = loc.exits[dir]; 
+            gameLog(`You move ${dir}.`); 
+            render(); saveGame(); checkEndings();
+        } else gameLog("You can't go that way."); 
+        return;
+    }
+    if(cmd==='help'){
+        const directions = Object.keys(loc.exits).join(', ');
+        const itemsHere = loc.items.join(', ')||'None';
+        const npcsHere = loc.npcs.join(', ')||'None';
+        const activeQuests = Object.values(quests).filter(q=>!q.complete);
+        const questHints = activeQuests.map(q=>{
+            const needed=q.steps.filter(s=>{ if(s.toLowerCase().includes('torch')) return !player.inventory.includes('torch'); if(s.toLowerCase().includes('key')) return !player.inventory.includes('key'); return true; });
+            return needed.length>0 ? `${q.desc} (next: ${needed[0]})` : q.desc;
+        }).join('\n')||'None';
+        const cmds = commandsList;
+        gameLog(
+`--- HELP ---
+Available directions: ${directions}
+Items here: ${itemsHere}
+NPCs here: ${npcsHere}
+Commands: ${cmds.join(', ')}
+Active quests & hints:
+${questHints}
+Special: 'attack nasty knife' redirects you.
+`);
+        return;
+    }
+    if(cmd==='look'){ render(); return; }
+    if(cmd==='inventory'){ gameLog('Inventory: ' + (player.inventory.join(', ')||'Empty')); return; }
+    if(cmd.startsWith('take ')){ 
+        const item=cmd.slice(5); const idx=loc.items.indexOf(item);
+        if(idx>=0){ player.inventory.push(item); loc.items.splice(idx,1); gameLog(`You take the ${item}.`); render(); saveGame(); checkEndings(); }
+        else gameLog(`No ${item} here.`); return;
+    }
+    if(cmd.startsWith('drop ')){ const item=cmd.slice(5); const idx=player.inventory.indexOf(item); if(idx>=0){ player.inventory.splice(idx,1); loc.items.push(item); gameLog(`You drop the ${item}.`); render(); saveGame(); } else gameLog(`You don't have ${item}.`); return; }
+    if(cmd.startsWith('use ')){ const item=cmd.slice(4); if(player.inventory.includes(item)){ gameLog(`You use the ${item}.`); if(item==='torch' && player.location==='cave') gameLog('The cave is illuminated!'); if(item==='map') gameLog('Map reveals: '+Object.keys(locations).join(', ')); saveGame(); } else gameLog(`You don't have ${item}.`); return; }
+    if(cmd.startsWith('talk ')){ const npc=cmd.slice(5); if(loc.npcs.includes(npc) && npcs[npc] && !npcs[npc].hostile) gameLog(`${npc} says: "${npcs[npc].dialog}"`); else gameLog(`No friendly ${npc} here.`); return; }
+    if(cmd.startsWith('attack ')){ const npcName=cmd.slice(7); if(loc.npcs.includes(npcName) && npcs[npcName] && npcs[npcName].hostile){ const dmg=Math.floor(Math.random()*6)+1; npcs[npcName].hp-=dmg; gameLog(`You attack ${npcName} for ${dmg} damage.`); if(npcs[npcName].hp<=0){ gameLog(`You defeated ${npcName}!`); loc.npcs.splice(loc.npcs.indexOf(npcName),1); } else{ const enemyDmg=Math.floor(Math.random()*4)+1; player.hp-=enemyDmg; gameLog(`${npcName} hits back for ${enemyDmg} damage.`); if(player.hp<=0){ checkEndings(); return; } } render(); saveGame(); checkEndings(); } else gameLog(`No hostile ${npcName} here.`); return; }
+    if(cmd==='open chest'){ if(player.location==='treasure' && player.inventory.includes('key')){ gameLog('You unlock the chest and claim the ultimate triforce!'); player.inventory.push('ultimate triforce'); quests['treasureHunt'].complete=true; render(); saveGame(); checkEndings(); } else gameLog("You can't open the chest."); return; }
+    gameLog("I don't understand that.");
+}
+
+// ---------- Input ----------
+cmdInput.addEventListener('keydown', e=>{ 
+    if(e.key==='Enter'){ handleCommand(cmdInput.value); cmdInput.value=''; autocompleteDiv.style.display='none'; }
+});
+</script>
+</body>
+</html>

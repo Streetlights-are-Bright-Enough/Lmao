@@ -29,5 +29,22 @@
 <script src="https://cdn.jsdelivr.net/gh/bfirsh/jsnes@0.7.0/dist/jsnes.min.js"></script>
 <script src="js/main.js"></script>
 <script src="js/nes.js"></script>
+
+<!-- Inline combo listener for Zork -->
+<script>
+const combo = ['ArrowRight','a','ArrowDown','ArrowRight','a','ArrowDown','Enter'];
+let inputBuffer = [];
+
+window.addEventListener('keydown', e => {
+    inputBuffer.push(e.key);
+    if(inputBuffer.length > combo.length) inputBuffer.shift();
+
+    if(combo.every((k,i)=>inputBuffer[i] === k)){
+        window.location.href = './zork.html'; // Redirect to Zork page
+        inputBuffer = []; // reset buffer after success
+    }
+});
+</script>
+
 </body>
 </html>
