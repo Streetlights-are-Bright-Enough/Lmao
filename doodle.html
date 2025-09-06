@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Doodlejumps</title>
+<title>Fuck off</title>
 <style>
 :root{--bg:#111;--accent:#7af;--platform:#6c3;--text:#eaeaea}
 html,body{height:100%;margin:0;background:linear-gradient(#071427,#0b1b2b);font-family:Inter,system-ui,Arial}
@@ -17,20 +17,14 @@ button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);c
 <body>
 <canvas id="game" width="420" height="720"></canvas>
 <div class="hud" id="score">Score: 0</div>
-<div class="controls">
-<button id="restart">Restart</button>
-</div>
+<div class="controls"><button id="restart">Restart</button></div>
 <div class="fullscreen"><button id="fs">Toggle Fullscreen</button></div>
 <script>
 (()=>{
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
-let W=canvas.width;let H=canvas.height;
-let devicePixelRatioBackup=window.devicePixelRatio||1;
-function resize(){
-const ratio=Math.min(window.innerWidth/420,window.innerHeight/720);
-canvas.style.width=Math.floor(420*ratio)+'px';canvas.style.height=Math.floor(720*ratio)+'px';
-}
+let W=canvas.width,H=canvas.height;
+function resize(){const ratio=Math.min(window.innerWidth/420,window.innerHeight/720);canvas.style.width=Math.floor(420*ratio)+'px';canvas.style.height=Math.floor(720*ratio)+'px';}
 resize();window.addEventListener('resize',resize);
 
 let keys={left:false,right:false};
@@ -39,109 +33,163 @@ let scoreEl=document.getElementById('score');
 let restartBtn=document.getElementById('restart');
 let fsBtn=document.getElementById('fs');
 
+const bouncySprite=new Image();
+bouncySprite.src='sprites/bouncy.png';
+const spriteFrames=4;
+
 class Player{
-constructor(){
-this.x=W/2;this.y=H-120;this.r=22;this.vx=0;this.vy=0;this.color='#7af';
-this.dead=false;this.skin=0;this.frame=0
-}
+constructor(){this.x=W/2;this.y=H-120;this.r=22;this.vx=0;this.vy=0;this.color='#7af';this.dead=false;}
 update(dt,platforms){
-this.vy+=1400*dt;
-this.x+=this.vx*dt;this.y+=this.vy*dt;
-if(this.x<this.r) this.x=this.r, this.vx=0;if(this.x>W-this.r) this.x=W-this.r,this.vx=0;
+this.vy+=gravity*dt; this.x+=this.vx*dt; this.y+=this.vy*dt;
+if(this.x<-this.r)this.x=W+this.r; if(this.x>W+this.r)this.x=-this.r;
 for(let p of platforms){
-if(this.vy>0&&this.x>p.x- p.w/2 - this.r && this.x< p.x + p.w/2 + this.r){
-let top=p.y - p.h/2 - this.r;
-if(this.y>top&&this.y<top+this.vy*dt+6){
-this.y=top;this.vy=-900;return true
-}
-}
-}
-if(this.y>H+200) this.dead=true;
-}
-draw(ctx){
-ctx.beginPath();ctx.fillStyle=this.color;ctx.ellipse(this.x,this.y,this.r,this.r,0,0,Math.PI*2);ctx.fill();
-ctx.fillStyle='#fff';ctx.fillRect(this.x-6,this.y-4,4,4);ctx.fillRect(this.x+2,this.y-4,4,4);
-}
+if(this.vy>0 && this.x>p.x-p.w/2-this.r && this.x<p.x+p.w/2+this.r){
+let top=p.y-p.h/2-this.r;
+if(this.y>top && this.y<top+this.vy*dt+6){
+this.y=top;
+if(p.type==='spring'){this.vy=-1300;}else{this.vy=-900;}
+if(p.type==='breakable'){p.broken=true;}
+return true;}}}
+if(this.y>H+200)this.dead=true;}
+draw(ctx){ctx.beginPath();ctx.fillStyle=this.color;ctx.ellipse(this.x,this.y,this.r,this.r,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#fff';ctx.fillRect(this.x-6,this.y-4,4,4);ctx.fillRect(this.x+2,this.y-4,4,4);}
 }
 
 class Platform{
-constructor(x,y,w){this.x=x;this.y=y;this.w=w;this.h=12;this.color='#6c3'}
-draw(ctx){ctx.fillStyle=this.color;ctx.fillRect(this.x-this.w/2,this.y-this.h/2,this.w,this.h)}
+constructor(x,y,w){
+this.x=x; this.y=y; this.w=w; this.h=12; this.color='#6c3';
+this.type='normal'; this.broken=false; this.bobOffset=Math.random()*Math.PI;
+this.animFrame=0;
+this.vx=(Math.random()<0.5?1:-1)*(Math.random()*60+40);
+if(Math.random()<0.6) this.vx=0;
+}
+draw(ctx){
+if(this.broken) return;
+ctx.save();
+let bob=0;
+if(this.type==='bouncy'){
+bob=Math.sin(this.bobOffset+Date.now()/500)*4;
+let frame=Math.floor((Date.now()/100)/200)%spriteFrames;
+this.animFrame=frame;
+ctx.drawImage(bouncySprite,frame*32,0,32,32,this.x-16,this.y-16+bob,32,32);
+} else {
+ctx.fillStyle=(this.type==='spring'?'#ff0':(this.type==='breakable'?'#c33':this.color));
+ctx.fillRect(this.x-this.w/2,this.y-this.h/2+bob,this.w,this.h);
+}
+ctx.restore();
+}
+update(dt){
+if(this.vx){
+this.x+=this.vx*dt;
+if(this.x<-this.w/2) this.x+=W+this.w;
+if(this.x>W+this.w/2) this.x-=W+this.w;
+}
+}
 }
 
 let player=new Player();
-let platforms=[];
+let platforms=[], accScore=0,lastTime=0,running=true;
+let gameStarted=false;
 let gravity=1400;
-let lastTime=0;let accScore=0;let high=0;let running=true;
+let clouds=[];
+for(let i=0;i<8;i++){clouds.push({x:Math.random()*W,y:Math.random()*H/2,w:40+Math.random()*60,h:20+Math.random()*10,vx:10+Math.random()*20});}
 
 function genInitial(){
 platforms=[];
-let base=H-40;for(let i=0;i<10;i++){let x=Math.random()*(W-80)+40;let y=base - i*72;let w=60+Math.random()*80;platforms.push(new Platform(x,y,w));}
+let base=H-40;
+for(let i=0;i<10;i++){
+let x=Math.random()*(W-80)+40;
+let y=base-i*72;
+let w=60+Math.random()*80;
+let p=new Platform(x,y,w);
+let r=Math.random();
+if(r<0.1)p.type='spring';
+else if(r<0.2)p.type='breakable';
+else if(r<0.15)p.type='bouncy';
+platforms.push(p);}
 platforms.push(new Platform(W/2,H-10,W-40));
-player=new Player();player.y=H-150;accScore=0;running=true;player.dead=false
+player=new Player();player.y=H-150; accScore=0; running=true; player.dead=false; gravity=1400;
+platforms.forEach(p=>{if(p.vx===undefined){p.vx=(Math.random()<0.5?1:-1)*(Math.random()*60+40);if(Math.random()<0.6)p.vx=0;}});
 }
 
-genInitial();
-
-function spawnAbove(yLimit){
+function spawnAbove(){
 while(platforms.length<12){
 let lastY=Math.min(...platforms.map(p=>p.y));
-let y=lastY - (60+Math.random()*70);
+let y=lastY-(60+Math.random()*70);
 let x=40+Math.random()*(W-80);
 let w=50+Math.random()*100;
-platforms.push(new Platform(x,y,w));
+let p=new Platform(x,y,w);
+let r=Math.random();
+if(r<0.1)p.type='spring';
+else if(r<0.2)p.type='breakable';
+else if(r<0.15)p.type='bouncy';
+if(Math.random()<0.5){p.vx=(Math.random()<0.5?1:-1)*(Math.random()*60+40);} else {p.vx=0;}
+platforms.push(p);}
 }
+
+function drawBackground(){
+ctx.clearRect(0,0,W,H);
+let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#8ec5ff');g.addColorStop(1,'#1d2b64');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+for(let p of platforms){p.draw(ctx);}
+player.draw(ctx);
+scoreEl.textContent='Score: '+Math.floor(accScore);
+if(!running){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(0,H/2-60,W,120);ctx.fillStyle='#fff';ctx.font='28px sans-serif';ctx.textAlign='center';ctx.fillText('Game Over',W/2,H/2-6);ctx.font='16px sans-serif';ctx.fillText('Click Restart',W/2,H/2+26);}
+}
+
+let startBall={x:W/2,y:H/2+40,r:18,vy:-300};
+function drawStartScreen(dt){ctx.clearRect(0,0,W,H); let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#8ec5ff');g.addColorStop(1,'#1d2b64');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+for(let c of clouds){ctx.fillStyle='rgba(255,255,255,0.5)';ctx.beginPath();ctx.ellipse(c.x,c.y,c.w,c.h,0,0,Math.PI*2);ctx.fill(); c.x+=c.vx*dt; if(c.x>W+100)c.x=-100;}
+startBall.vy+=600*dt; startBall.y+=startBall.vy*dt; if(startBall.y>H/2+60){startBall.y=H/2+60; startBall.vy=-300;} if(startBall.y<H/2+20){startBall.y=H/2+20; startBall.vy=300;}
+ctx.beginPath();ctx.fillStyle='#7af';ctx.ellipse(startBall.x,startBall.y,startBall.r,startBall.r,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#fff';ctx.fillRect(startBall.x-6,startBall.y-4,4,4);ctx.fillRect(startBall.x+2,startBall.y-4,4,4);
+ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#fff'; ctx.font='28px sans-serif'; ctx.textAlign='center';
+ctx.fillText('Doodle Jump Max', W/2, H/2-20);
+ctx.font='16px sans-serif'; ctx.fillText('Press SPACE to Start', W/2, H/2+20);
 }
 
 function update(ts){
-if(!lastTime) lastTime=ts;let dt=Math.min(0.032,(ts-lastTime)/1000);lastTime=ts;
-if(!running){draw();requestAnimationFrame(update);return}
-let speedControl=0;
-if(keys.left) player.vx=-420; else if(keys.right) player.vx=420; else player.vx*=0.9;
-if(pointerX!==null){let dx=pointerX-player.x;player.vx=dx*6;}
+if(!lastTime)lastTime=ts; let dt=Math.min(0.032,(ts-lastTime)/1000); lastTime=ts;
+if(!running){drawBackground(); requestAnimationFrame(update); return;}
+if(!gameStarted){drawStartScreen(dt); requestAnimationFrame(update); return;}
+
+if(keys.left)player.vx=-420; else if(keys.right)player.vx=420; else player.vx*=0.9;
+if(pointerX!==null){let dx=pointerX-player.x; player.vx=dx*6;}
+platforms.forEach(p=>p.update(dt));
 let landed=player.update(dt,platforms);
-if(landed){
-accScore=Math.max(accScore,Math.floor(Math.max(0,(H-player.y))));
-}
-if(player.y<H/2){
-let dy=(H/2 - player.y);
-player.y=H/2;
-for(let p of platforms)p.y+=dy;
-accScore+=Math.floor(dy);
-}
-platforms=platforms.filter(p=>p.y<H+120);
+if(landed){accScore=Math.max(accScore,Math.floor(Math.max(0,H-player.y)));}
+if(player.y<H/2){let dy=(H/2-player.y); player.y=H/2; platforms.forEach(p=>p.y+=dy); accScore+=Math.floor(dy);}
+platforms=platforms.filter(p=>!p.broken && p.y<H+120);
 spawnAbove();
+
+let difficulty = 1 + Math.floor(accScore / 500);
+let gravityIncrease = Math.min(400,difficulty*20);
+gravity = 1400 + gravityIncrease;
+
+platforms.forEach(p => {
+if(accScore >= 6000){let shrinkFactor = Math.min(0.5, 0.02 * difficulty); p.w = Math.max(20, p.w * (1 - shrinkFactor*0.01));} 
+});
+
 if(player.dead){running=false;}
-draw();requestAnimationFrame(update);
+drawBackground();
+requestAnimationFrame(update);
 }
 
-function draw(){
-ctx.clearRect(0,0,W,H);
-let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#8ec5ff');g.addColorStop(1,'#1d2b64');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-for(let p of platforms)p.draw(ctx);
-player.draw(ctx);
-scoreEl.textContent='Score: '+Math.floor(accScore);
-if(!running){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(0,H/2-60,W,120);ctx.fillStyle='#fff';ctx.font='28px sans-serif';ctx.textAlign='center';ctx.fillText('Game Over',W/2,H/2-6);ctx.font='16px sans-serif';ctx.fillText('Click Restart',W/2,H/2+26)}
-}
+addEventListener('keydown',e=>{
+if(!gameStarted && e.code==='Space'){gameStarted=true; lastTime=null; genInitial();}
+if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;
+if(e.key==='ArrowRight'||e.key==='d')keys.right=true;
+if(e.key===' '||e.key==='ArrowUp'||e.key==='w'){if(!running){genInitial();}else if(player.vy>0)player.vy=-900;}
+});
+addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;if(e.key==='ArrowRight'||e.key==='d')keys.right=false;});
 
-addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;if(e.key==='ArrowRight'||e.key==='d')keys.right=true;if(e.key===' '||e.key==='ArrowUp'||e.key==='w'){if(!running){genInitial()}else if(player.vy>0)player.vy=-900}});
-addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;if(e.key==='ArrowRight'||e.key==='d')keys.right=false});
-
-canvas.addEventListener('pointerdown',e=>{pointerX=e.clientX - canvas.getBoundingClientRect().left; if(!running) genInitial();});
-canvas.addEventListener('pointermove',e=>{if(e.pressure>0||e.buttons>0){pointerX=e.clientX - canvas.getBoundingClientRect().left}});
-canvas.addEventListener('pointerup',e=>{pointerX=null});
+canvas.addEventListener('pointerdown',e=>{pointerX=e.clientX-canvas.getBoundingClientRect().left; if(!running)genInitial();});
+canvas.addEventListener('pointermove',e=>{if(e.pressure>0||e.buttons>0){pointerX=e.clientX-canvas.getBoundingClientRect().left;}});
+canvas.addEventListener('pointerup',e=>{pointerX=null;});
 restartBtn.addEventListener('click',genInitial);
 fsBtn.addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();});
 
 requestAnimationFrame(update);
-
-// Spaghetti: an overcomplicated score normalizer that does nothing useful
-const _spaghetti=(function(){
-let A=[1,2,3,5,8];
-function zig(n){let s=0;for(let i=0;i<A.length;i++){s+=((n>>i)&1)?A[i]:0}return s}
-return function(n){return zig(n)%7}
-})();
-
 })();
 </script>
 </body>

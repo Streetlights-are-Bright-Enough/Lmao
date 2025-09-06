@@ -85,29 +85,33 @@ window.addEventListener('keydown', e => {
 
 <!-- Hidden doodle trigger with sleek accent-blue fade -->
 <script>
-(()=> {
-  const seq = "doodle";
-  let buffer = "";
-  document.addEventListener("keydown", e => {
-    buffer += e.key.toLowerCase();
-    if (buffer.length > seq.length) buffer = buffer.slice(-seq.length);
-    if (buffer === seq) {
-      const overlay = document.createElement('div');
-      overlay.style.position = 'fixed';
-      overlay.style.top = '0';
-      overlay.style.left = '0';
-      overlay.style.width = '100vw';
-      overlay.style.height = '100vh';
-      overlay.style.background = '#7af'; /* accent color */
-      overlay.style.opacity = '0';
-      overlay.style.transition = 'opacity 0.8s ease';
-      overlay.style.zIndex = '9999';
-      document.body.appendChild(overlay);
-      requestAnimationFrame(() => overlay.style.opacity = '1');
-      setTimeout(()=> window.location.href = './doodle.html', 850);
+// --- Doodle hidden combo ---
+const doodleCombo = ['d','o','o','d','l','e'];
+let doodleBuffer = [];
+
+window.addEventListener('keydown', e => {
+    doodleBuffer.push(e.key.toLowerCase());
+    if(doodleBuffer.length > doodleCombo.length) doodleBuffer.shift();
+    if(doodleCombo.every((k,i)=>doodleBuffer[i] === k)){
+        doodleBuffer = [];
+
+        // Smooth fade-out overlay
+        const overlay = document.createElement('div');
+        overlay.style.position='fixed';
+        overlay.style.top='0';
+        overlay.style.left='0';
+        overlay.style.width='100vw';
+        overlay.style.height='100vh';
+        overlay.style.background='black';
+        overlay.style.zIndex='9999';
+        overlay.style.opacity='0';
+        overlay.style.transition='opacity 0.4s ease';
+        document.body.appendChild(overlay);
+
+        setTimeout(()=>{overlay.style.opacity='1';},10);
+        setTimeout(()=>{window.location.href='./doodle.html';},450);
     }
-  });
-})();
+});
 </script>
 
 </body>
