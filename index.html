@@ -3,44 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Streets HUD Arcade</title>
+<title>Bright enough</title>
 <link rel="stylesheet" href="css/hud.css">
 </head>
 <body>
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQLalCJhT5Ta5tc7EE6gOqZDev0wwzNWGQqw&s" alt="Profile Picture" class="wiggle">
-<h1>Streets</h1>
-<p id="bio">on my business card, I am a teacher. In my mind, I am a programmer. in my heart, I am a gamer.</p>
+<img src="https://www.nicepng.com/png/full/741-7415301_quagsire.png" alt="Profile Picture" class="wiggle fade-in">
+<h1 class="fade-in">Streets</h1>
+<p id="bio" class="fade-in">
+  On my business card, I am a <em>Teacher</em>. In my mind, I am a <em>Programmer</em>. In my heart, I am a <em>Gamer</em>.
+</p>
 
 <div id="hud">
   <div class="hud-header">The arcade</div>
 
-  <div class="hud-panel" id="nes-panel" style="top:60px;left:20px;">
+  <div class="hud-panel" id="nes-panel" style="top:60px;left:20px;display:none;">
     <h2>NES Emulator</h2>
-    <canvas id="nes-canvas"></canvas>
+    <canvas id="nes-canvas" width="256" height="240"></canvas>
     <input type="file" class="load-rom" accept=".nes" onchange="loadNESROM(event)">
     <button class="state-btn" onclick="saveState('nes')">Save State</button>
     <button class="state-btn" onclick="loadState('nes')">Load State</button>
   </div>
 
-  <div class="hud-panel" id="snes-panel" style="top:60px;left:360px;">
+  <div class="hud-panel" id="snes-panel" style="top:60px;left:360px;display:none;">
     <h2>SNES Emulator</h2>
-    <canvas id="snes-canvas"></canvas>
+    <canvas id="snes-canvas" width="256" height="224"></canvas>
     <input type="file" class="load-rom" accept=".smc,.sfc" onchange="loadSNESROM(event)">
     <button class="state-btn" onclick="saveState('snes')">Save State</button>
     <button class="state-btn" onclick="loadState('snes')">Load State</button>
   </div>
 
-  <div class="hud-panel" id="gb-panel" style="top:60px;left:700px;">
+  <div class="hud-panel" id="gb-panel" style="top:60px;left:700px;display:none;">
     <h2>Gameboy Emulator</h2>
-    <canvas id="gb-canvas"></canvas>
+    <canvas id="gb-canvas" width="160" height="144"></canvas>
     <input type="file" class="load-rom" accept=".gb,.gbc" onchange="loadGBROM(event)">
     <button class="state-btn" onclick="saveState('gb')">Save State</button>
     <button class="state-btn" onclick="loadState('gb')">Load State</button>
-  </div>
-
-  <div class="hud-panel" id="rom-panel" style="top:400px; left:20px; width:600px; height:300px;">
-    <h2>ROM Library</h2>
-    <div id="rom-library"></div>
   </div>
 
   <div class="keyboard-overlay" id="keyboard">
@@ -58,9 +55,9 @@
 <script src="https://cdn.jsdelivr.net/gh/bfirsh/jsnes@0.7.0/dist/jsnes.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/snes9x-js/dist/snes9x.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-gameboy@0.0.3/dist/jsGameBoy.min.js"></script>
+
 <script src="js/main.js"></script>
 <script src="js/emulators.js"></script>
 <script src="js/keyboard.js"></script>
-<script src="js/romLibrary.js"></script>
 </body>
 </html>

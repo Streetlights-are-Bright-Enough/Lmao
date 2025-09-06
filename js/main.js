@@ -1,8 +1,8 @@
-// Text reveal
-function obscureText(el,text){let idx=0;function step(){if(idx<=text.length){el.textContent=text.slice(0,idx);idx++;setTimeout(step,30);}}step();}
-obscureText(document.getElementById('bio'),"Hello. I am… well, me. Explorer of code, chaos, and static. Placeholder for story.");
+document.addEventListener('DOMContentLoaded', () => {
+  const elements = document.querySelectorAll('.fade-in');
+  elements.forEach((el,i)=>el.style.animationDelay=`${i*0.5}s`);
+});
 
-// Konami code
 const konami=[38,38,40,40,37,39,37,39,66,65,32,13];
 let inputSeq=[];
 document.addEventListener('keydown',e=>{
@@ -15,7 +15,6 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// HUD activation
 function triggerHUD(){
   document.documentElement.style.setProperty('--bg','#000');
   document.documentElement.style.setProperty('--fg','#0f0');
@@ -24,9 +23,12 @@ function triggerHUD(){
   document.querySelector('h1').textContent="Log-Horizon HUD";
   document.getElementById('hud').style.display='block';
   loadPanelPositions();
+  ['nes-panel','snes-panel','gb-panel'].forEach(panelId=>{
+    const panel=document.getElementById(panelId);
+    if(panel) panel.style.display='flex';
+  });
 }
 
-// Drag & persistent layout + snapping
 const SNAP_DISTANCE=20;
 function savePanelPositions(){
   let panels={};
@@ -46,6 +48,7 @@ function loadPanelPositions(){
     }
   });
 }
+
 document.querySelectorAll('.hud-panel').forEach(panel=>{
   let offsetX,offsetY,dragging=false;
   panel.addEventListener('mousedown',e=>{
