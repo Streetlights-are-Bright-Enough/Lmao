@@ -23,10 +23,8 @@ function triggerHUD(){
   document.querySelector('h1').textContent="Log-Horizon HUD";
   document.getElementById('hud').style.display='block';
   loadPanelPositions();
-  ['nes-panel','snes-panel','gb-panel'].forEach(panelId=>{
-    const panel=document.getElementById(panelId);
-    if(panel) panel.style.display='flex';
-  });
+  const nesPanel=document.getElementById('nes-panel');
+  if(nesPanel) nesPanel.style.display='flex';
 }
 
 const SNAP_DISTANCE=20;
@@ -65,15 +63,9 @@ document.querySelectorAll('.hud-panel').forEach(panel=>{
       if(Math.abs(newY)<SNAP_DISTANCE) newY=0;
       if(Math.abs(window.innerWidth-(newX+panel.offsetWidth))<SNAP_DISTANCE) newX=window.innerWidth-panel.offsetWidth;
       if(Math.abs(window.innerHeight-(newY+panel.offsetHeight))<SNAP_DISTANCE) newY=window.innerHeight-panel.offsetHeight;
-      document.querySelectorAll('.hud-panel').forEach(other=>{
-        if(other===panel) return;
-        if(Math.abs(newX-other.offsetLeft)<SNAP_DISTANCE) newX=other.offsetLeft;
-        if(Math.abs(newY-other.offsetTop)<SNAP_DISTANCE) newY=other.offsetTop;
-      });
       panel.style.left=newX+'px';
       panel.style.top=newY+'px';
     }
   });
   window.addEventListener('mouseup',()=>{dragging=false;panel.style.zIndex=''; savePanelPositions();});
-  panel.addEventListener('mouseup',()=>savePanelPositions());
 });
