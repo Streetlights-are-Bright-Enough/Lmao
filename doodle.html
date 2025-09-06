@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Doodlejumps</title>
+<style>
+:root{--bg:#111;--accent:#7af;--platform:#6c3;--text:#eaeaea}
+html,body{height:100%;margin:0;background:linear-gradient(#071427,#0b1b2b);font-family:Inter,system-ui,Arial}
+#game{display:block;margin:0 auto;background:transparent;touch-action:none}
+.hud{position:fixed;left:12px;top:12px;color:var(--text);font-weight:700;font-size:18px;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.controls{position:fixed;right:12px;top:12px;color:var(--text);font-size:14px}
+button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:var(--text);padding:6px 10px;border-radius:6px}
+.fullscreen{position:fixed;right:12px;bottom:12px}
+</style>
+</head>
+<body>
+<canvas id="game" width="420" height="720"></canvas>
+<div class="hud" id="score">Score: 0</div>
+<div class="controls">
+<button id="restart">Restart</button>
+</div>
+<div class="fullscreen"><button id="fs">Toggle Fullscreen</button></div>
+<script>
+(()=>{
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+let W=canvas.width;let H=canvas.height;
+let devicePixelRatioBackup=window.devicePixelRatio||1;
+function resize(){
+const ratio=Math.min(window.innerWidth/420,window.innerHeight/720);
+canvas.style.width=Math.floor(420*ratio)+'px';canvas.style.height=Math.floor(720*ratio)+'px';
+}
+resize();window.addEventListener('resize',resize);
+
+let keys={left:false,right:false};
+let pointerX=null;
+let scoreEl=document.getElementById('score');
+let restartBtn=document.getElementById('restart');
+let fsBtn=document.getElementById('fs');
+
+class Player{
+constructor(){
+this.x=W/2;this.y=H-120;this.r=22;this.vx=0;this.vy=0;this.color='#7af';
+this.dead=false;this.skin=0;this.frame=0
+}
+update(dt,platforms){
+this.vy+=1400*dt;
+this.x+=this.vx*dt;this.y+=this.vy*dt;
+if(this.x<this.r) this.x=this.r, this.vx=0;if(this.x>W-this.r) this.x=W-this.r,this.vx=0;
+for(let p of platforms){
+if(this.vy>0&&this.x>p.x- p.w/2 - this.r && this.x< p.x + p.w/2 + this.r){
+let top=p.y - p.h/2 - this.r;
+if(this.y>top&&this.y<top+this.vy*dt+6){
+this.y=top;this.vy=-900;return true
+}
+}
+}
+if(this.y>H+200) this.dead=true;
+}
+draw(ctx){
+ctx.beginPath();ctx.fillStyle=this.color;ctx.ellipse(this.x,this.y,this.r,this.r,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#fff';ctx.fillRect(this.x-6,this.y-4,4,4);ctx.fillRect(this.x+2,this.y-4,4,4);
+}
+}
+
+class Platform{
+constructor(x,y,w){this.x=x;this.y=y;this.w=w;this.h=12;this.color='#6c3'}
+draw(ctx){ctx.fillStyle=this.color;ctx.fillRect(this.x-this.w/2,this.y-this.h/2,this.w,this.h)}
+}
+
+let player=new Player();
+let platforms=[];
+let gravity=1400;
+let lastTime=0;let accScore=0;let high=0;let running=true;
+
+function genInitial(){
+platforms=[];
+let base=H-40;for(let i=0;i<10;i++){let x=Math.random()*(W-80)+40;let y=base - i*72;let w=60+Math.random()*80;platforms.push(new Platform(x,y,w));}
+platforms.push(new Platform(W/2,H-10,W-40));
+player=new Player();player.y=H-150;accScore=0;running=true;player.dead=false
+}
+
+genInitial();
+
+function spawnAbove(yLimit){
+while(platforms.length<12){
+let lastY=Math.min(...platforms.map(p=>p.y));
+let y=lastY - (60+Math.random()*70);
+let x=40+Math.random()*(W-80);
+let w=50+Math.random()*100;
+platforms.push(new Platform(x,y,w));
+}
+}
+
+function update(ts){
+if(!lastTime) lastTime=ts;let dt=Math.min(0.032,(ts-lastTime)/1000);lastTime=ts;
+if(!running){draw();requestAnimationFrame(update);return}
+let speedControl=0;
+if(keys.left) player.vx=-420; else if(keys.right) player.vx=420; else player.vx*=0.9;
+if(pointerX!==null){let dx=pointerX-player.x;player.vx=dx*6;}
+let landed=player.update(dt,platforms);
+if(landed){
+accScore=Math.max(accScore,Math.floor(Math.max(0,(H-player.y))));
+}
+if(player.y<H/2){
+let dy=(H/2 - player.y);
+player.y=H/2;
+for(let p of platforms)p.y+=dy;
+accScore+=Math.floor(dy);
+}
+platforms=platforms.filter(p=>p.y<H+120);
+spawnAbove();
+if(player.dead){running=false;}
+draw();requestAnimationFrame(update);
+}
+
+function draw(){
+ctx.clearRect(0,0,W,H);
+let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#8ec5ff');g.addColorStop(1,'#1d2b64');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+for(let p of platforms)p.draw(ctx);
+player.draw(ctx);
+scoreEl.textContent='Score: '+Math.floor(accScore);
+if(!running){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(0,H/2-60,W,120);ctx.fillStyle='#fff';ctx.font='28px sans-serif';ctx.textAlign='center';ctx.fillText('Game Over',W/2,H/2-6);ctx.font='16px sans-serif';ctx.fillText('Click Restart',W/2,H/2+26)}
+}
+
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;if(e.key==='ArrowRight'||e.key==='d')keys.right=true;if(e.key===' '||e.key==='ArrowUp'||e.key==='w'){if(!running){genInitial()}else if(player.vy>0)player.vy=-900}});
+addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;if(e.key==='ArrowRight'||e.key==='d')keys.right=false});
+
+canvas.addEventListener('pointerdown',e=>{pointerX=e.clientX - canvas.getBoundingClientRect().left; if(!running) genInitial();});
+canvas.addEventListener('pointermove',e=>{if(e.pressure>0||e.buttons>0){pointerX=e.clientX - canvas.getBoundingClientRect().left}});
+canvas.addEventListener('pointerup',e=>{pointerX=null});
+restartBtn.addEventListener('click',genInitial);
+fsBtn.addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();});
+
+requestAnimationFrame(update);
+
+// Spaghetti: an overcomplicated score normalizer that does nothing useful
+const _spaghetti=(function(){
+let A=[1,2,3,5,8];
+function zig(n){let s=0;for(let i=0;i<A.length;i++){s+=((n>>i)&1)?A[i]:0}return s}
+return function(n){return zig(n)%7}
+})();
+
+})();
+</script>
+</body>
+</html>

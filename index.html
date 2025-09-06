@@ -83,5 +83,32 @@ window.addEventListener('keydown', e => {
 });
 </script>
 
+<!-- Hidden doodle trigger with sleek accent-blue fade -->
+<script>
+(()=> {
+  const seq = "doodle";
+  let buffer = "";
+  document.addEventListener("keydown", e => {
+    buffer += e.key.toLowerCase();
+    if (buffer.length > seq.length) buffer = buffer.slice(-seq.length);
+    if (buffer === seq) {
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100vw';
+      overlay.style.height = '100vh';
+      overlay.style.background = '#7af'; /* accent color */
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.8s ease';
+      overlay.style.zIndex = '9999';
+      document.body.appendChild(overlay);
+      requestAnimationFrame(() => overlay.style.opacity = '1');
+      setTimeout(()=> window.location.href = './doodle.html', 850);
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
