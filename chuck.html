@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chuck Intersect Flash Loop</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+  }
+  #flash-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: black;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: scale(1);
+  }
+  #complete-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    color: #00ff00;
+    font-size: 3em;
+    font-family: monospace;
+    opacity: 0;
+    z-index: 10000;
+    pointer-events: none;
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+  }
+</style>
+</head>
+<body>
+<div id="flash-overlay"></div>
+<div id="complete-text">do it for bill</div>
+<script>
+const overlay = document.getElementById('flash-overlay');
+const completeText = document.getElementById('complete-text');
+
+const images = [
+  'https://i.pinimg.com/474x/77/a0/f6/77a0f61ed297fa054c0b66729ed31adc.jpg',
+  'https://upload.wikimedia.org/wikipedia/en/c/c2/Chuckbartowski.jpg',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0SE7iohRAZdd9xYEbbVumtBZsvyJ5ncq8Cw&s',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRS_fkRhjq-Li2apX9KS99QkgY5jPFXzOqBtg&s',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEWcXKvO6EIkaPVG_fYgplleYa83BPK26tsg&s',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIs2_4VhFjHL1YUA5Lo24tZTAQZmYOIoixYA&s',
+  'https://media.discordapp.net/attachments/391363679804850187/1413839986725224458/GyJ8PwpWwAADfE9.jpg?ex=68bd6498&is=68bc1318&hm=7594056624be77375d8a15fb49babc9428a58830f0020668e8a85bd4255ba4d2&=&format=webp',
+  'https://media.discordapp.net/attachments/391363679804850187/1413839987304173670/GyQhptgXUAEEKTc.jpg?ex=68bd6498&is=68bc1318&hm=21dcdc501a72176756932e021ccd561c0e0209ae68262e0ba6f101a7d1de1fc8&=&format=webp',
+  'https://media.discordapp.net/attachments/391363679804850187/1413839987958353970/GyCu0uJW4AAsQOA.jpg?ex=68bd6499&is=68bc1319&hm=bbdbb5222d575faf4b40a212d3b9593293e9faabaffbfccdabcdc5b86ccdf4f1&=&format=webp',
+  'https://media.discordapp.net/attachments/391363679804850187/1413839988352749650/Gu6XleUWMAAevG_.jpg?ex=68bd6499&is=68bc1319&hm=f411714d8b1dc572d7e00da4103a78e829f23241dc534a26a3e9e02eca95bb47&=&format=webp',
+  'https://media.discordapp.net/attachments/391363679804850187/1413839988705198080/Gu5Qqo2XsAAq-MK.png?ex=68bd6499&is=68bc1319&hm=702b36b7186fb970eb2b9a51c79c569d9d20fbecd8a59aba0c2bb46b4cca6a39&=&format=webp',
+  'https://media.discordapp.net/attachments/391363679804850187/1413839989095137330/Gu-ebBbWcAAD6nI.jpg?ex=68bd6499&is=68bc1319&hm=13b7fb03ff8c47969d260ba61d8d79586cb79e7aad08923aab5f4acb3b9e5904&=&format=webp',
+  'https://media.discordapp.net/attachments/391363679804850187/1413839989547991070/GuaVlpeW8AASUEN.jpg?ex=68bd6499&is=68bc1319&hm=cc72cd086d1a3758511e2f3b9c090ae9e5616a833776d241f97425445e48874c&=&format=webp',
+  'https://media.discordapp.net/attachments/391363679804850187/1413839989896384562/GnHGcxQXgAAUHMh.png?ex=68bd6499&is=68bc1319&hm=fa08b76496fc8c068872e1d4657e52bb283c0bfeb4cfba696c6e1741cc7159c4&=&format=webp'
+
+];
+
+const flashDuration = 150; // ms
+const gapDuration = 50;    // ms
+const minScale = 1;
+const maxScale = 1.05;
+const maxCycles = 10;
+
+let cycleCount = 0;
+
+function flashSequence(idx = 0) {
+    if (cycleCount >= maxCycles) {
+        showComplete();
+        return;
+    }
+
+    overlay.style.backgroundImage = `url(${images[idx]})`;
+    const scale = minScale + Math.random()*(maxScale - minScale);
+    overlay.style.transform = `scale(${scale})`;
+    overlay.style.opacity = '1';
+
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            let nextIdx = idx + 1;
+            if (nextIdx >= images.length) {
+                nextIdx = 0;
+                cycleCount++;
+            }
+            flashSequence(nextIdx);
+        }, gapDuration);
+    }, flashDuration);
+}
+
+function showComplete() {
+    completeText.style.opacity = '1';
+    setTimeout(() => {
+        window.location.href = './index.html';
+    }, 2000);
+}
+
+flashSequence();
+</script>
+</body>
+</html>

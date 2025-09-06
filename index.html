@@ -46,5 +46,42 @@ window.addEventListener('keydown', e => {
 });
 </script>
 
+<!-- Chuck-style transition before navigating to chuck.html -->
+<script>
+let chuckTriggered = false;
+window.addEventListener('keydown', e => {
+    if(!chuckTriggered && e.altKey && e.key.toLowerCase() === 'i'){
+        chuckTriggered = true;
+
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        overlay.style.background = 'black';
+        overlay.style.zIndex = '9999';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.2s ease';
+        document.body.appendChild(overlay);
+
+        let flashes = 0;
+        const flashInterval = setInterval(()=>{
+            overlay.style.opacity = Math.random(); // chaotic flash
+            flashes++;
+            if(flashes > 10){ // after ~10 flashes, go full black and redirect
+                clearInterval(flashInterval);
+                overlay.style.transition = 'opacity 0.4s ease';
+                overlay.style.opacity = '1';
+                setTimeout(()=>{
+                    window.location.href = './chuck.html';
+                }, 400);
+            }
+        }, 50); // 50ms per flash for rapid chaos
+    }
+});
+</script>
+
 </body>
 </html>
