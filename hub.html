@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Hub</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Hub - My Project</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 </head>
 <body>
   <h1>Welcome!</h1>
@@ -11,15 +11,19 @@
   <button id="logout">Logout</button>
 
   <script>
-    const SUPABASE_URL = 'https://your-supabase-url.supabase.co';
-    const SUPABASE_ANON_KEY = 'your-anon-key';
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = 'https://gthmaclvolczkhujsuts.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aG1hY2x2b2xjemtodWpzdXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTI1ODAsImV4cCI6MjA3Mjg2ODU4MH0.Blii34bqL_sxvilJLdvduSvsAMrPYnsWq_a87AwWLi4';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function init() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (!session) return window.location.href = '/';
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Protect the page: redirect if not logged in
+      if (!session) return window.location.href = '/Lmao/login.html';
 
       const user = session.user;
+
+      // Upsert user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -42,7 +46,7 @@
 
     document.getElementById('logout').addEventListener('click', async () => {
       await supabase.auth.signOut();
-      window.location.href = '/';
+      window.location.href = '/Lmao/login.html';
     });
 
     init();
