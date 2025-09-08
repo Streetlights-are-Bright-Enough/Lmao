@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Hub - My Project</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 </head>
 <body>
   <h1>Welcome!</h1>
@@ -11,19 +11,19 @@
   <button id="logout">Logout</button>
 
   <script>
-    const SUPABASE_URL = 'https://gthmaclvolczkhujsuts.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aG1hY2x2b2xjemtodWpzdXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTI1ODAsImV4cCI6MjA3Mjg2ODU4MH0.Blii34bqL_sxvilJLdvduSvsAMrPYnsWq_a87AwWLi4';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    document.addEventListener("DOMContentLoaded", async () => {
+      const SUPABASE_URL = 'https://gthmaclvolczkhujsuts.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aG1hY2x2b2xjemtodWpzdXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTI1ODAsImV4cCI6MjA3Mjg2ODU4MH0.Blii34bqL_sxvilJLdvduSvsAMrPYnsWq_a87AwWLi4';
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function init() {
       const { data: { session } } = await supabase.auth.getSession();
 
-      // Protect the page: redirect if not logged in
+      // Protect hub page
       if (!session) return window.location.href = '/Lmao/login.html';
 
       const user = session.user;
 
-      // Upsert user profile
+      // Sync user into profiles table
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -42,14 +42,13 @@
         <p>Hello, ${profile.username}</p>
         <img src="${profile.avatar_url}" alt="avatar" width="64" height="64">
       `;
-    }
 
-    document.getElementById('logout').addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = '/Lmao/login.html';
+      // Logout button
+      document.getElementById('logout').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/Lmao/login.html';
+      });
     });
-
-    init();
   </script>
 </body>
 </html>
