@@ -5,15 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
 <link rel="stylesheet" href="css/hud.css">
-<!-- CSP for images -->
 <meta http-equiv="Content-Security-Policy" content="img-src 'self' https://streetlights-are-bright-enough.github.io data:;">
 <style>
-  body {
-    text-align: center;
-    background: #f0f0f0;
-    font-family: Arial, sans-serif;
-    color: black;
-  }
+  body { text-align: center; background: #f0f0f0; font-family: Arial, sans-serif; color: black; }
   .fade-in { animation: fadeIn 1s ease forwards; opacity: 0; }
   @keyframes fadeIn { to { opacity: 1; } }
 
@@ -64,7 +58,6 @@ window.onload = () => {
       if(session) window.location.href = './home.html';
   });
 
-  // Email/password login
   document.getElementById('login-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -72,7 +65,6 @@ window.onload = () => {
       if(error) alert(error.message);
   });
 
-  // Email/password sign up
   document.getElementById('signup-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -81,7 +73,6 @@ window.onload = () => {
       else alert("Check your email to confirm your account!");
   });
 
-  // Password reset
   document.getElementById('reset-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       if(!email) return alert("Enter your email");
@@ -90,7 +81,6 @@ window.onload = () => {
       else alert("Password reset email sent!");
   });
 
-  // Discord OAuth login
   document.getElementById('discord-btn').addEventListener('click', async () => {
       const { error } = await supabaseClient.auth.signInWithOAuth({
           provider: 'discord',
