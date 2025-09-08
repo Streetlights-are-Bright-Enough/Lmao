@@ -5,18 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>bright enough</title>
 <link rel="stylesheet" href="css/hud.css">
-<style>
-  body { text-align: center; background: #f0f0f0; font-family: Arial, sans-serif; color: black; }
-  .fade-in { animation: fadeIn 1s ease forwards; opacity: 0; }
-  @keyframes fadeIn { to { opacity: 1; } }
-</style>
 </head>
 <body>
-
 <img src="https://www.nicepng.com/png/full/741-7415301_quagsire.png" alt="Profile Picture" class="wiggle fade-in">
-<h1 class="fade-in">Bright Enough</h1>
+<h1 class="fade-in">Streets</h1>
 <p id="bio" class="fade-in">
-  Welcome! Use the secret combos to explore.
+  On my business card, I am a <em>Teacher</em>. In my mind, I am a <em>Programmer</em>. In my heart, I am a <em>Gamer</em>.
 </p>
 
 <div id="hud">
@@ -35,31 +29,13 @@
 <script src="js/main.js"></script>
 <script src="js/nes.js"></script>
 
-<!-- Keystroke listener for login -->
-<script>
-const loginCombo = ['l','o','g','i','n'];
-let loginBuffer = [];
-
-window.addEventListener('keydown', e => {
-    loginBuffer.push(e.key.toLowerCase());
-    if(loginBuffer.length > loginCombo.length) loginBuffer.shift();
-
-    if(loginCombo.every((k,i)=>loginBuffer[i] === k)){
-        window.location.href = './login.html'; // redirect same tab
-        loginBuffer = [];
-    }
-});
-</script>
-
-<!-- Inline combo listener for Zork -->
+<!-- Zork combo -->
 <script>
 const zorkCombo = ['ArrowRight','a','ArrowDown','ArrowRight','a','ArrowDown','Enter'];
 let zorkBuffer = [];
-
 window.addEventListener('keydown', e => {
     zorkBuffer.push(e.key);
     if(zorkBuffer.length > zorkCombo.length) zorkBuffer.shift();
-
     if(zorkCombo.every((k,i)=>zorkBuffer[i] === k)){
         window.location.href = './zork.html';
         zorkBuffer = [];
@@ -67,24 +43,23 @@ window.addEventListener('keydown', e => {
 });
 </script>
 
-<!-- Chuck-style transition before navigating to chuck.html -->
+<!-- Chuck combo -->
 <script>
 let chuckTriggered = false;
 window.addEventListener('keydown', e => {
     if(!chuckTriggered && e.altKey && e.key.toLowerCase() === 'i'){
         chuckTriggered = true;
-
         const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100vw';
-        overlay.style.height = '100vh';
-        overlay.style.background = 'black';
-        overlay.style.zIndex = '9999';
-        overlay.style.pointerEvents = 'none';
-        overlay.style.opacity = '0';
-        overlay.style.transition = 'opacity 0.2s ease';
+        overlay.style.position='fixed';
+        overlay.style.top='0';
+        overlay.style.left='0';
+        overlay.style.width='100vw';
+        overlay.style.height='100vh';
+        overlay.style.background='black';
+        overlay.style.zIndex='9999';
+        overlay.style.pointerEvents='none';
+        overlay.style.opacity='0';
+        overlay.style.transition='opacity 0.2s ease';
         document.body.appendChild(overlay);
 
         let flashes = 0;
@@ -102,11 +77,10 @@ window.addEventListener('keydown', e => {
 });
 </script>
 
-<!-- Hidden doodle trigger with sleek accent-blue fade -->
+<!-- Doodle combo -->
 <script>
 const doodleCombo = ['d','o','o','d','l','e'];
 let doodleBuffer = [];
-
 window.addEventListener('keydown', e => {
     doodleBuffer.push(e.key.toLowerCase());
     if(doodleBuffer.length > doodleCombo.length) doodleBuffer.shift();
@@ -126,6 +100,20 @@ window.addEventListener('keydown', e => {
 
         setTimeout(()=>{overlay.style.opacity='1';},10);
         setTimeout(()=>{window.location.href='./doodle.html';},450);
+    }
+});
+</script>
+
+<!-- New login combo -->
+<script>
+const loginCombo = ['l','o','g','i','n'];
+let loginBuffer = [];
+window.addEventListener('keydown', e => {
+    loginBuffer.push(e.key.toLowerCase());
+    if(loginBuffer.length > loginCombo.length) loginBuffer.shift();
+    if(loginCombo.every((k,i)=>loginBuffer[i] === k)){
+        window.location.href = './login.html';
+        loginBuffer = [];
     }
 });
 </script>
