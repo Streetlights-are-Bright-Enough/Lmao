@@ -1,59 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Home Hub</title>
-<link rel="stylesheet" href="css/hud.css">
-<!-- CSP for images -->
-<meta http-equiv="Content-Security-Policy" content="img-src 'self' https://streetlights-are-bright-enough.github.io data:;">
-<style>
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background: #f0f0f0;
-    color: black;
-}
-h1 { margin-top: 3rem; }
-</style>
+  <meta charset="UTF-8">
+  <title>Hub</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+  <h1>Welcome!</h1>
+  <div id="user-info"></div>
+  <button id="logout">Logout</button>
 
-<h1>Welcome to the Home Hub</h1>
-<p id="user-info">Loading...</p>
+  <script>
+    const SUPABASE_URL = 'https://your-supabase-url.supabase.co';
+    const SUPABASE_ANON_KEY = 'your-anon-key';
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-window.onload = async () => {
-    const SUPABASE_URL = "https://gthmaclvolczkhujsuts.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aG1hY2x2b2xjemtodWpzdXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTI1ODAsImV4cCI6MjA3Mjg2ODU4MH0.Blii34bqL_sxvilJLdvduSvsAMrPYnsWq_a87AwWLi4";
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    async function init() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (!session) return window.location.href = '/';
 
-    // Check for session (handles OAuth callbacks automatically)
-    const { data: { session }, error } = await supabaseClient.auth.getSession();
-    if(error){
-        console.error("Supabase session error:", error.message);
-        document.getElementById('user-info').textContent = "Error loading session. Please log in again.";
-        return;
+      const user = session.user;
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          username: user.user_metadata.user_name || user.email,
+          email: user.email,
+          avatar_url: user.user_metadata.avatar_url || '',
+          last_login: new Date().toISOString()
+        }, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (profileError) console.error(profileError);
+
+      document.getElementById('user-info').innerHTML = `
+        <p>Hello, ${profile.username}</p>
+        <img src="${profile.avatar_url}" alt="avatar" width="64" height="64">
+      `;
     }
 
-    if(!session){
-        // Not logged in, redirect to login page
-        window.location.href = './login.html';
-    } else {
-        // Logged in: show user info
-        const user = session.user;
-        document.getElementById('user-info').textContent = `Logged in as ${user.email || user.user_metadata.full_name || user.id}`;
-    }
-
-    // Optional: listen for auth changes
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        if(!session){
-            window.location.href = './login.html';
-        }
+    document.getElementById('logout').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/';
     });
-};
-</script>
 
+    init();
+  </script>
 </body>
 </html>
