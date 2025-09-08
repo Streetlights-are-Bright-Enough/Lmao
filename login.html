@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
 <link rel="stylesheet" href="css/hud.css">
-<!-- Content-Security-Policy for images -->
+<!-- CSP for images -->
 <meta http-equiv="Content-Security-Policy" content="img-src 'self' https://streetlights-are-bright-enough.github.io data:;">
 <style>
   body {
@@ -59,11 +59,12 @@ window.onload = () => {
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aG1hY2x2b2xjemtodWpzdXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTI1ODAsImV4cCI6MjA3Mjg2ODU4MH0.Blii34bqL_sxvilJLdvduSvsAMrPYnsWq_a87AwWLi4";
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Redirect if logged in
+  // Redirect if already logged in
   supabaseClient.auth.onAuthStateChange((event, session) => {
       if(session) window.location.href = './home.html';
   });
 
+  // Email/password login
   document.getElementById('login-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -71,6 +72,7 @@ window.onload = () => {
       if(error) alert(error.message);
   });
 
+  // Email/password sign up
   document.getElementById('signup-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -79,14 +81,16 @@ window.onload = () => {
       else alert("Check your email to confirm your account!");
   });
 
+  // Password reset
   document.getElementById('reset-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       if(!email) return alert("Enter your email");
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: './login.html' });
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: 'https://streetlights-are-bright-enough.github.io/Lmao/login.html' });
       if(error) alert(error.message);
       else alert("Password reset email sent!");
   });
 
+  // Discord OAuth login
   document.getElementById('discord-btn').addEventListener('click', async () => {
       const { error } = await supabaseClient.auth.signInWithOAuth({
           provider: 'discord',
