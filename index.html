@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>bright enough</title>
 <link rel="stylesheet" href="css/hud.css">
+<!-- Content-Security-Policy for images -->
+<meta http-equiv="Content-Security-Policy" content="img-src 'self' https://streetlights-are-bright-enough.github.io data:;">
 </head>
 <body>
 <img src="https://www.nicepng.com/png/full/741-7415301_quagsire.png" alt="Profile Picture" class="wiggle fade-in">
@@ -104,7 +106,7 @@ window.addEventListener('keydown', e => {
 });
 </script>
 
-<!-- New login combo -->
+<!-- Login combo -->
 <script>
 const loginCombo = ['l','o','g','i','n'];
 let loginBuffer = [];
