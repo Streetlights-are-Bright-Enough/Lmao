@@ -3,31 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <title>Login - My Project</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+  <!-- Use unpkg CDN to avoid MIME issues -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/supabase.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    .login-btn { padding: 12px 24px; background: #5865F2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-btn {
+      padding: 12px 24px;
+      background: #5865F2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
   <button class="login-btn" id="discord-login">Login with Discord</button>
 
   <script>
-    const SUPABASE_URL = 'https://gthmaclvolczkhujsuts.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aG1hY2x2b2xjemtodWpzdXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTI1ODAsImV4cCI6MjA3Mjg2ODU4MH0.Blii34bqL_sxvilJLdvduSvsAMrPYnsWq_a87AwWLi4';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Wait until Supabase library is loaded
+    document.addEventListener("DOMContentLoaded", () => {
+      const SUPABASE_URL = 'https://gthmaclvolczkhujsuts.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aG1hY2x2b2xjemtodWpzdXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTI1ODAsImV4cCI6MjA3Mjg2ODU4MH0.Blii34bqL_sxvilJLdvduSvsAMrPYnsWq_a87AwWLi4';
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Redirect logged-in users automatically
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.href = '/Lmao/hub.html';
-    });
-
-    document.getElementById('discord-login').addEventListener('click', async () => {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'discord',
-        options: { redirectTo: 'https://streetlights-are-bright-enough.github.io/Lmao/hub.html' }
+      // Redirect logged-in users automatically
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) window.location.href = '/Lmao/hub.html';
       });
-      if (error) alert('Login failed: ' + error.message);
+
+      // Discord login
+      document.getElementById('discord-login').addEventListener('click', async () => {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'discord',
+          options: { redirectTo: 'https://streetlights-are-bright-enough.github.io/Lmao/hub.html' }
+        });
+        if (error) alert('Login failed: ' + error.message);
+      });
     });
   </script>
 </body>
