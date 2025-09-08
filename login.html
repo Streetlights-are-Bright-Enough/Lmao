@@ -10,7 +10,7 @@
     text-align: center;
     background: #f0f0f0;
     font-family: Arial, sans-serif;
-    color: black; /* text is black */
+    color: black;
   }
   .fade-in { animation: fadeIn 1s ease forwards; opacity: 0; }
   @keyframes fadeIn { to { opacity: 1; } }
@@ -50,10 +50,11 @@
   <button class="oauth-btn" id="discord-btn">Login with Discord</button>
 </div>
 
-<!-- Scripts at the end -->
+<!-- Supabase script -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-  // Initialize Supabase client
+window.onload = () => {
+  // Initialize Supabase
   const SUPABASE_URL = "https://gthmaclvolczkhujsuts.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0aG1hY2x2b2xjemtodWpzdXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTI1ODAsImV4cCI6MjA3Mjg2ODU4MH0.Blii34bqL_sxvilJLdvduSvsAMrPYnsWq_a87AwWLi4";
   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -63,7 +64,7 @@
       if(session) window.location.href = './home.html';
   });
 
-  // Email/password login
+  // Login button
   document.getElementById('login-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -71,7 +72,7 @@
       if(error) alert(error.message);
   });
 
-  // Sign-up
+  // Signup button
   document.getElementById('signup-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -80,7 +81,7 @@
       else alert("Check your email to confirm your account!");
   });
 
-  // Password reset
+  // Password reset button
   document.getElementById('reset-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       if(!email) return alert("Enter your email");
@@ -97,6 +98,7 @@
       });
       if(error) alert(error.message);
   });
+};
 </script>
 
 </body>
